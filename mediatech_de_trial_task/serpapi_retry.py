@@ -8,7 +8,6 @@ entire Airflow task.
 import logging
 import random
 
-from mediatech_de_trial_task.types import SerpApiRequestParams, SerpApiResponse
 from requests.exceptions import ChunkedEncodingError, ConnectionError, Timeout
 from serpapi import GoogleSearch
 from tenacity import (
@@ -17,6 +16,8 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
+
+from mediatech_de_trial_task.types import SerpApiRequestParams, SerpApiResponse
 
 logger = logging.getLogger(__name__)
 
