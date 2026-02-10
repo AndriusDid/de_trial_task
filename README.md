@@ -100,6 +100,10 @@ The DAG (`google_trends_dag`) runs daily with three tasks:
 2. **process_trends_data** -- Flattens responses into records, runs validation (schema checks, search-term coverage, null detection, date range gap analysis), and writes to CSV.
 3. **summarize_results** -- Logs aggregate statistics (mean, max, min) per search term.
 
+### Note on SerpApi response caching
+
+SerpApi caches responses on their side. When the same query parameters are sent within a short window, SerpApi returns the cached result instead of fetching fresh data from Google Trends. This means consecutive DAG runs on the same day will likely receive identical data (same `created_at` timestamp) without consuming additional API credits. The pipeline handles this gracefully — the CSV writer deduplicates by `query`, `date`, and `location`, keeping only the record with the latest `created_at`. Since the DAG uses a rolling date range (`DateRange(months=6)`), the parameters naturally shift each day, producing fresh results on subsequent days.
+
 ---
 
 ## Design Document: Future Extensions

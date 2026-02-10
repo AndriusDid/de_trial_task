@@ -4,7 +4,6 @@ from mediatech_de_trial_task.normalize import normalize_trends_response
 
 
 def _make_response(timeline_data=None, *, interest=True, created_at="2025-01-15 12:00:00 UTC"):
-    """Build a minimal SerpApiResponse for testing."""
     resp = {"search_metadata": {"created_at": created_at}}
     if interest:
         iot = {}
@@ -14,8 +13,8 @@ def _make_response(timeline_data=None, *, interest=True, created_at="2025-01-15 
     return resp
 
 
-def _make_timeline_point(date="Jan 1 – 7, 2025", values=None):
-    point = {"date": date}
+def _make_timeline_point(timestamp="1735689600", values=None):
+    point = {"timestamp": timestamp}
     if values is not None:
         point["values"] = values
     return point
@@ -52,7 +51,7 @@ class TestNormalizeEmptyInputs:
 class TestNormalizeSingleRecord:
     def test_single_point_single_value(self):
         timeline = [_make_timeline_point(
-            date="Jan 1 – 7, 2025",
+            timestamp="1735689600",
             values=[_make_value("vpn", "80", 80)],
         )]
         resp = _make_response(timeline)
@@ -62,16 +61,16 @@ class TestNormalizeSingleRecord:
         rec = records[0]
         assert rec["query"] == "vpn"
         assert rec["location"] == "US"
-        assert rec["date"] == "Jan 1 – 7, 2025"
+        assert rec["date"] == "2025-01-01 00:00:00+0000"
         assert rec["value"] == "80"
         assert rec["extracted_value"] == 80
-        assert rec["created_at"] == "2025-01-15 12:00:00 UTC"
+        assert rec["created_at"] == "2025-01-15 12:00:00+0000"
 
 
 class TestNormalizeMultipleValues:
     def test_multiple_values_in_one_point(self):
         timeline = [_make_timeline_point(
-            date="Jan 1 – 7, 2025",
+            timestamp="1735689600",
             values=[
                 _make_value("vpn", "80", 80),
                 _make_value("antivirus", "60", 60),
@@ -89,23 +88,23 @@ class TestNormalizeMultipleValues:
 class TestNormalizeMultiplePoints:
     def test_two_points_one_value_each(self):
         timeline = [
-            _make_timeline_point("Week 1", [_make_value("vpn", "50", 50)]),
-            _make_timeline_point("Week 2", [_make_value("vpn", "70", 70)]),
+            _make_timeline_point("1735689600", [_make_value("vpn", "50", 50)]),
+            _make_timeline_point("1736294400", [_make_value("vpn", "70", 70)]),
         ]
         resp = _make_response(timeline)
         records = normalize_trends_response(resp, "DE")
 
         assert len(records) == 2
-        assert records[0]["date"] == "Week 1"
-        assert records[1]["date"] == "Week 2"
+        assert records[0]["date"] == "2025-01-01 00:00:00+0000"
+        assert records[1]["date"] == "2025-01-08 00:00:00+0000"
         assert all(r["location"] == "DE" for r in records)
 
     def test_multiple_points_multiple_values(self):
         values = [_make_value("a", "1", 1), _make_value("b", "2", 2)]
         timeline = [
-            _make_timeline_point("W1", values),
-            _make_timeline_point("W2", values),
-            _make_timeline_point("W3", values),
+            _make_timeline_point("1735689600", values),
+            _make_timeline_point("1736294400", values),
+            _make_timeline_point("1736899200", values),
         ]
         resp = _make_response(timeline)
         records = normalize_trends_response(resp, "US")
@@ -116,7 +115,7 @@ class TestNormalizeMultiplePoints:
 class TestNormalizeDefaults:
     def test_missing_value_fields_use_defaults(self):
         timeline = [_make_timeline_point(
-            date="Jan 1 – 7, 2025",
+            timestamp="1735689600",
             values=[{}],
         )]
         resp = _make_response(timeline)
@@ -128,7 +127,7 @@ class TestNormalizeDefaults:
         assert rec["value"] == ""
         assert rec["extracted_value"] == 0
 
-    def test_missing_date_defaults_to_empty(self):
+    def test_missing_timestamp_defaults_to_empty(self):
         point = {"values": [_make_value()]}
         resp = _make_response([point])
         records = normalize_trends_response(resp, "US")
@@ -136,7 +135,7 @@ class TestNormalizeDefaults:
         assert records[0]["date"] == ""
 
     def test_point_without_values_key_produces_no_records(self):
-        timeline = [{"date": "Jan 1 – 7, 2025"}]
+        timeline = [{"timestamp": "1735689600"}]
         resp = _make_response(timeline)
         records = normalize_trends_response(resp, "US")
 

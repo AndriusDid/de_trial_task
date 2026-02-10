@@ -43,6 +43,7 @@ def write_trends_csv(
     if output_path.exists():
         existing_df = pd.read_csv(output_path)
         combined = pd.concat([existing_df, new_df], ignore_index=True)
+        combined = combined.sort_values("created_at")
         combined = combined.drop_duplicates(subset=["query", "date", "location"], keep="last")
         combined.to_csv(output_path, index=False)
     else:

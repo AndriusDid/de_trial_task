@@ -15,7 +15,7 @@ def _record(**overrides) -> TrendRecord:
         "date": "Jan 1 – 7, 2025",
         "value": "80",
         "extracted_value": 80,
-        "created_at": "2025-01-15 12:00:00 UTC",
+        "created_at": "2025-01-15 12:00:00 +0000",
     }
     base.update(overrides)
     return base
